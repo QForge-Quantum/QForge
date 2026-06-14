@@ -1,5 +1,5 @@
 # qforge_compiler.py
-# Author: Ojas Gupta
+
 import math
 from dataclasses import dataclass
 from typing import List, Optional
@@ -16,20 +16,22 @@ except ImportError:
     nx = None
 
 # ==========================================
-# 1. THE UNIFIED GRAMMAR
+# 1. THE UNIFIED GRAMMAR (Sprints 1 - 14)
 # ==========================================
 GRAMMAR = """
 start: statement+
 
+# Sprint 12: Hardware Target Decorator
 target_hw: "@target_hardware" "(" ESCAPED_STRING ")"
 
+# Sprint 14: Pulse Level Calibration Blocks
 defcal_block: "defcal" IDENTIFIER "(" params ")" ":" statement+ "end"
 
 ?statement: assignment | expression | with_block | if_block | for_block | def_block | defcal_block | target_hw
 
 with_block: "with" "ancilla" "(" NUMBER ")" "as" IDENTIFIER ":" statement+ "end"
 
-
+# Sprint 10: Differentiating Quantum and Classical IF statements
 if_block: "if" "quantum" "(" expression ")" ":" statement+ "end"             -> if_quantum
         | "if" "classical" "(" index_expr "==" NUMBER ")" ":" statement+ "end" -> if_classical
 
@@ -40,7 +42,7 @@ def_block: optimize_dec? "def" IDENTIFIER "(" params ")" ":" statement+ "end"
 
 params: [IDENTIFIER ("," IDENTIFIER)*]
 
-
+# Sprint 10: Differentiating normal assignments from mid-circuit measurements
 assignment: IDENTIFIER "=" expression                             -> assign_var
           | index_expr "=" "measure" "(" index_expr ")"           -> assign_measure
 
@@ -107,7 +109,7 @@ class ParamDecl(ASTNode): name: str; line: int
 @dataclass
 class TargetHardwareOp(ASTNode): name: str; line: int 
 
-
+# Sprint 14: Pulse Control Nodes
 @dataclass
 class DefCalNode(ASTNode): name: str; params: List[str]; body: List[ASTNode]; line: int
 @dataclass
@@ -248,14 +250,20 @@ class SemanticAnalyzer(NodeVisitor):
     def visit_TargetHardwareOp(self, node):
         self.hardware_name = node.name
         if not nx:
-            print(f"[Warning] 'networkx' not installed. Topology validation for '{node.name}' is disabled.")
             return
             
         self.hardware_graph = nx.Graph()
-        if node.name == "ibm_quito":
+        if node.name == "ibm_quito": # 5-qubit
             self.hardware_graph.add_edges_from([(0,1), (1,2), (1,3), (3,4)])
+        elif node.name == "ibm_16":  # 16-qubit Heavy Hex Lattice
+            self.hardware_graph.add_edges_from([
+                (0,1), (1,2), (1,4), (3,4), (4,5), (5,8), 
+                (6,7), (7,8), (8,9), 
+                (8,11),  # <--- THE MISSING BRIDGE 
+                (10,11), (11,14), 
+                (12,13), (13,14), (14,15)
+            ])
         else:
-            print(f"[Warning] Unknown topology '{node.name}'. Defaulting to All-To-All.")
             self.hardware_graph = None
 
     def _declare_reg(self, name, size):
@@ -480,6 +488,8 @@ class QiskitEmitter(NodeVisitor):
     def visit_MacroCallNode(self, node):
         macro = self.macros[node.name]
         old_env = self.macro_env.copy()
+        
+        # Sprint 14: Handling Pulse blocks under Qiskit 2.x limitations
         if isinstance(macro, DefCalNode):
             for param, arg in zip(macro.params, node.args):
                 self.macro_env[param] = self.resolve(arg)
