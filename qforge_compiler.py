@@ -249,20 +249,29 @@ class SemanticAnalyzer(NodeVisitor):
         self.macro_env[node.name] = evaluate_math(node.value, self.macro_env, node.line)
     def visit_TargetHardwareOp(self, node):
         self.hardware_name = node.name
-        if not nx:
-            return
+        if not nx: return
             
         self.hardware_graph = nx.Graph()
-        if node.name == "ibm_quito": # 5-qubit
+        if node.name == "ibm_quito": 
             self.hardware_graph.add_edges_from([(0,1), (1,2), (1,3), (3,4)])
-        elif node.name == "ibm_16":  # 16-qubit Heavy Hex Lattice
+        elif node.name == "ibm_16":  
             self.hardware_graph.add_edges_from([
                 (0,1), (1,2), (1,4), (3,4), (4,5), (5,8), 
-                (6,7), (7,8), (8,9), 
-                (8,11),  # <--- THE MISSING BRIDGE 
-                (10,11), (11,14), 
-                (12,13), (13,14), (14,15)
+                (6,7), (7,8), (8,9), (8,11), (10,11), 
+                (11,14), (12,13), (13,14), (14,15)
             ])
+        elif node.name.startswith("grid_"):
+            # Natively generate utility-scale lattices for benchmarking!
+            size = int(node.name.split("_")[1])
+            cols = int(math.sqrt(size))
+            rows = math.ceil(size / cols)
+            edges = []
+            for r in range(rows):
+                for c in range(cols):
+                    idx = r * cols + c
+                    if c < cols - 1 and idx + 1 < size: edges.append((idx, idx + 1))
+                    if r < rows - 1 and idx + cols < size: edges.append((idx, idx + cols))
+            self.hardware_graph.add_edges_from(edges)
         else:
             self.hardware_graph = None
 
