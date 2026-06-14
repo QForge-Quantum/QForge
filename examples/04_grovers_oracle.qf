@@ -1,0 +1,15 @@
+# 04_grovers_oracle.qf
+# Automatically synthesizes a Grover Phase Oracle
+
+# Create a 4-qubit array (representing numbers 0-15)
+database = qint(4)
+
+# Put the entire database into a uniform superposition
+superpose(database)
+
+# We want to find the number 13 (binary 1101).
+# The compiler automatically calculates the bit-flips, 
+# applies the Multi-Controlled Z, and uncomputes the garbage!
+search(database, 13)
+
+measure(database)
