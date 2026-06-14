@@ -1,0 +1,38 @@
+# 12_advanced_routing_params.qf
+# ---------------------------------------------------------
+# Validating Sprint 13: Auto-Routing & Runtime Parameterization
+# ---------------------------------------------------------
+
+# Load the hardware constraints. 
+# ibm_quito topology: (0-1), (1-2), (1-3), (3-4)
+@target_hardware("ibm_quito")
+
+q = qregister(5)
+
+# ==========================================
+# 1. Classical Parameterization
+# ==========================================
+# We declare variables that the compiler will intentionally leave UNRESOLVED
+# so that the execution engine can pass numbers in dynamically at runtime!
+theta = param("theta")
+phi = param("phi")
+
+superpose(q[0])
+
+# Apply QML rotations using our dynamic parameters
+rotate(q[0], "y", theta)
+rotate(q[4], "x", phi)
+
+# ==========================================
+# 2. The Auto-Routing Challenge
+# ==========================================
+# Qubit 0 and Qubit 4 are on completely opposite ends of the heavy-hex chip.
+# They are NOT physically connected. 
+#
+# The QForge Auto-Router will dynamically calculate the shortest path (0 -> 1 -> 3 -> 4),
+# inject a cascade of SWAP gates to physically move the data across the chip,
+# perform the Entanglement, and reverse the SWAPs to restore array integrity!
+
+entangle(q[0], q[4])
+
+measure(q)
