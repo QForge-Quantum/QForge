@@ -1,0 +1,53 @@
+# 09_quantum_teleportation.qf
+# Validates Sprint 10: Mid-Circuit Measurements & Classical Feed-Forward
+
+alice = qregister(2)
+bob = qregister(1)
+
+# Sprint 10: Declare a classical register to hold Alice's measurements
+bus = cint(2)
+
+# ==========================================
+# Step 1: State Preparation
+# ==========================================
+# Give Alice a mystery state to teleport (e.g., |+>)
+superpose(alice[0])
+
+# Create an entangled pair shared between Alice and Bob
+superpose(alice[1])
+entangle(alice[1], bob[0])
+
+# ==========================================
+# Step 2: Alice's Bell Measurement
+# ==========================================
+# Alice entangles her mystery state with her half of the shared pair
+entangle(alice[0], alice[1])
+superpose(alice[0])
+
+# Sprint 10: Mid-circuit measurements! 
+# Alice measures her qubits and stores them in the classical 'bus'
+bus[0] = measure(alice[0])
+bus[1] = measure(alice[1])
+
+# ==========================================
+# Step 3: Classical Feed-Forward (Dynamic Circuits)
+# ==========================================
+# Sprint 10: Hardware-native 'if' conditions. 
+# The QPU reads the classical bus and conditionally applies gates to Bob's qubit.
+
+# If Alice's second bit is 1, apply an X gate to Bob
+if classical(bus[1] == 1):
+    flip(bob[0])
+end
+
+# If Alice's first bit is 1, apply a Z gate to Bob
+# (Since QForge lacks a native Z gate, we synthesize it using H-X-H)
+if classical(bus[0] == 1):
+    superpose(bob[0])
+    flip(bob[0])
+    superpose(bob[0])
+end
+
+# Bob now possesses the exact quantum state Alice started with.
+# Let's measure Bob to verify!
+measure(bob)
