@@ -1,0 +1,50 @@
+# 11_vqe_ansatz.qf
+# ---------------------------------------------------------
+# Algorithm: Variational Quantum Eigensolver (VQE)
+# Architecture: Hardware-Efficient Ansatz
+# Constraint: IBM Quito Heavy-Hex Topology
+# ---------------------------------------------------------
+
+# The compiler will actively guard against illegal wire connections!
+@target_hardware("ibm_quito")
+
+# Allocate 4 qubits to simulate a small molecular Hamiltonian
+system = qregister(4)
+
+# ---------------------------------------------------------
+# STATE PREPARATION
+# ---------------------------------------------------------
+# Initialize the molecule in an equal superposition
+for i in range(4):
+    superpose(system[i])
+end
+
+# ---------------------------------------------------------
+# VQE LAYER 1: Quantum Machine Learning Rotations
+# ---------------------------------------------------------
+# In a full run, a classical Python loop would dynamically 
+# update these floats. For this pass, we use fixed weights.
+for i in range(4):
+    rotate(system[i], "y", 1.57079)  # Pi/2
+    rotate(system[i], "z", 0.78539)  # Pi/4
+end
+
+# ---------------------------------------------------------
+# VQE LAYER 1: Hardware-Constrained Entanglement
+# ---------------------------------------------------------
+# We MUST respect the ibm_quito wiring: [(0,1), (1,2), (1,3), (3,4)]
+# The compiler will physically reject entangle(system[0], system[3])
+entangle(system[0], system[1])
+entangle(system[1], system[2])
+entangle(system[1], system[3])
+
+# ---------------------------------------------------------
+# VQE LAYER 2: Deepening the Neural Network
+# ---------------------------------------------------------
+for i in range(4):
+    rotate(system[i], "y", 3.14159)  # Pi
+    rotate(system[i], "x", 0.33333)
+end
+
+# Measure the system so the classical CPU can calculate the energy loss
+measure(system)
