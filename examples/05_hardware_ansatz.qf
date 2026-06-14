@@ -1,0 +1,22 @@
+# 05_hardware_ansatz.qf
+q = qregister(4)
+
+def entanglement_layer(reg):
+    for i in range(3):
+        entangle(reg[i], reg[i+1])
+    end
+end
+
+def rotation_layer(reg):
+    for i in range(4):
+        superpose(reg[i])
+        flip(reg[i])
+    end
+end
+
+for depth in range(3):
+    rotation_layer(q)
+    entanglement_layer(q)
+end
+
+measure(q)
