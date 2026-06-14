@@ -1,0 +1,17 @@
+# 07_math_routing.qf
+# Demonstrates Sprint 9: Advanced Compile-Time Math Evaluation
+
+ring = qregister(4)
+
+# Create a closed entanglement ring using modulo math!
+# This calculates:
+# entangle(ring[0], ring[1])
+# entangle(ring[1], ring[2])
+# entangle(ring[2], ring[3])
+# entangle(ring[3], ring[0]) 
+
+for i in range(4):
+    entangle(ring[i], ring[(i + 1) % 4])
+end
+
+measure(ring)
