@@ -1,0 +1,14 @@
+# 01_hello_quantum.qf
+# Creates a standard Bell State (|00> + |11>)
+
+q = qregister(2)
+
+# Put the first qubit into a superposition of 0 and 1
+superpose(q[0])
+
+# Entangle the second qubit to the first
+# If q[0] is measured as 1, q[1] will instantly become 1
+entangle(q[0], q[1])
+
+# Collapse the wave function
+measure(q)
