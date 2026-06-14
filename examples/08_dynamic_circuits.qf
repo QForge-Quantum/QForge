@@ -1,0 +1,19 @@
+# 08_dynamic_circuits.qf
+# Demonstrates Mid-Circuit Measurement and Native Hardware Conditions
+
+q = qregister(2)
+c = cint(2)  
+
+superpose(q[0])
+
+# Perform a mid-circuit measurement on q[0]
+c[0] = measure(q[0])
+
+# Hardware native if-statement
+if classical(c[0] == 1):
+    flip(q[1])
+end
+
+# Final state measurement on q[1] ONLY. 
+# We avoid touching q[0] so we don't trigger the Double Measurement error!
+c[1] = measure(q[1])
