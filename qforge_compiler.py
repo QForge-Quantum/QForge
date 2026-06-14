@@ -550,7 +550,10 @@ class QiskitEmitter(NodeVisitor):
         cbit_index = self.cregs[c_idx.reg_name] + c_idx.index
         cbit = self.circuit.clbits[cbit_index]
 
-        with self.circuit.if_test((cbit, node.val)):
+        # --- THE FIX: Cast the integer to a boolean so Qiskit QASM3 parser is happy! ---
+        condition_value = bool(node.val) 
+
+        with self.circuit.if_test((cbit, condition_value)):
             for stmt in node.body:
                 self.visit(stmt)
 
@@ -783,7 +786,10 @@ class QASM3Emitter(NodeVisitor):
 
     def visit_IfClassicalNode(self, node):
         c_idx = self.resolve_index(node.control_creg)
-        self.emit(f"if ({c_idx} == {node.val}) {{")
+        # --- THE FIX: Convert 1/0 to true/false for strict QASM3 parsing ---
+        bool_val = "true" if node.val == 1 else "false"
+        
+        self.emit(f"if ({c_idx} == {bool_val}) {{")
         self.indent_level += 1
         for stmt in node.body: self.visit(stmt)
         self.indent_level -= 1
@@ -875,15 +881,19 @@ class QASM3Emitter(NodeVisitor):
             self.required_subroutines.add("draper_qft")
             self.emit(f"draper_qft_add({src}, {tgt});")
 
-    def visit_MeasureOp(self, node): 
-        target = self.resolve(node.target_reg)
+    def visit_MeasureOp(self, node):
+        # Instead of measuring blindly, explicitly allocate a classical 
+        # register string so QASM3 saves the output!
         
-        if isinstance(target, QubitIndex):
-            self.emit(f"// Final state measurement of qubit '{target.reg_name}[{target.index}]'")
-            self.emit(f"measure {target.reg_name}[{target.index}];")
-        else:
-            self.emit(f"// Final state measurement of register '{target}'")
-            self.emit(f"measure {target};")
+        q_reg_name = self.resolve(node.target_reg)
+        size = self.reg_sizes[q_reg_name]
+        bucket_name = f"{q_reg_name}_meas"
+        
+        # 1. Emit the classical bucket declaration
+        self.emit(f"bit[{size}] {bucket_name};")
+        
+        # 2. Emit the mapped measurement
+        self.emit(f"{bucket_name} = measure {q_reg_name};")
 
     def visit_MeasureAssignOp(self, node):
         c_idx = self.resolve_index(node.target_creg)
