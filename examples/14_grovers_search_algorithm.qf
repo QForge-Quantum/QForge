@@ -1,0 +1,42 @@
+# grovers_database_search.qf
+# -------------------------------------------------------------------
+# REAL-WORLD PROBLEM: Unstructured Database Search / Hash Reversal
+# Algorithm: Grover's Amplitude Amplification
+# -------------------------------------------------------------------
+
+@target_hardware("all_to_all")
+db_nodes = qregister(4)
+
+# --- STEP 1: PARALLEL UNIVERSE INITIALIZATION ---
+# We put the qubits into a superposition of ALL 16 possible passwords simultaneously.
+for i in range(4):
+    superpose(db_nodes[i])
+end
+
+# --- OPTIMIZATION LOOP: AMPLITUDE AMPLIFICATION ---
+# For N=16, 3 iterations guarantees a ~96.1% success rate.
+for iter in range(3):
+
+    # --- STEP 2: THE QUANTUM ORACLE (The "Needle" Identifier) ---
+    # Flips the phase of ONLY the correct answer (target hash '11')
+    search(db_nodes, 11)
+
+    # --- STEP 3: THE DIFFUSION OPERATOR ---
+    # Inverts probabilities about the mean, shrinking the wrong answers
+    # and heavily amplifying the target answer.
+    for i in range(4):
+        superpose(db_nodes[i])
+    end
+
+    # Phase inversion about the mean (The zero-state oracle)
+    search(db_nodes, 0)
+
+    for i in range(4):
+        superpose(db_nodes[i])
+    end
+
+end # End of Amplitude Amplification Loop
+
+# --- STEP 4: MEASURE THE SOLUTION ---
+# When the wave-function collapses, it will yield '11' with 96% certainty.
+measure(db_nodes)
