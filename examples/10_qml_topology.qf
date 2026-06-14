@@ -1,0 +1,16 @@
+# 10_qml_topology.qf
+@target_hardware("ibm_quito")
+
+q = qregister(5)
+
+# Path B: QML Floating Point Rotations
+rotate(q[0], "y", 3.14159 / 2)
+rotate(q[1], "z", 1.25)
+
+# Path C: The ibm_quito graph ONLY connects (0,1), (1,2), (1,3), (3,4)
+entangle(q[0], q[1])  # Will Pass
+entangle(q[1], q[3])  # Will Pass
+
+# ERROR TRIGGER:
+# Qubit 0 and 4 are physically too far apart on the chip!
+entangle(q[0], q[4])
