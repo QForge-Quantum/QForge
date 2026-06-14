@@ -1,0 +1,11 @@
+# 06_expected_failure.qf
+# PROVES the Semantic Analyzer works.
+# This file will purposefully fail compilation.
+
+q = qregister(2)
+
+# Collapse the wave function
+measure(q)
+
+# ERROR: The compiler should physically reject this operation!
+superpose(q[0])
