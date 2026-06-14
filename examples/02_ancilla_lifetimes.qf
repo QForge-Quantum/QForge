@@ -1,0 +1,22 @@
+# 02_ancilla_lifetimes.qf
+# Demonstrates safe temporary variables and quantum control flow
+
+data = qregister(2)
+superpose(data)
+
+# Allocate a temporary 1-qubit scratchpad
+with ancilla(1) as scratch:
+    
+    # Do some intermediate work
+    superpose(scratch[0])
+    entangle(scratch[0], data[0])
+    
+    # QForge dynamically translates this into a Controlled-X gate!
+    if quantum(scratch[0]):
+        flip(data[1])
+    end
+
+# The compiler automatically uncomputes 'scratch' right here.
+end
+
+measure(data)
