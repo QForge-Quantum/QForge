@@ -1,0 +1,27 @@
+# 03_optimized_math.qf
+# Demonstrates hardware-aware algorithm selection
+
+# A deep, wide algorithm optimized for speed
+@optimize(target="depth")
+def fast_addition(x, y):
+    add(x, y)
+end
+
+# A shallow, narrow algorithm optimized for low-qubit hardware
+@optimize(target="width")
+def narrow_addition(x, y):
+    add(x, y)
+end
+
+a = qint(4)
+b = qint(4)
+
+superpose(a)
+
+# The compiler automatically links the Draper QFT Adder
+fast_addition(a, b)
+
+# The compiler automatically links the Ripple-Carry Adder
+narrow_addition(a, b)
+
+measure(b)
